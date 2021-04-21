@@ -1,4 +1,5 @@
 # MPM Group Project
+# Students: Giedo, Chris, Azher, Micha
 
 # ---------- Import / Install packages -----------------------------------------
 
