@@ -1,6 +1,6 @@
 # MPM Group Project
 # Students: Giedo, Chris, Azher, Micha
-#test123
+
 # ---------- Import / Install packages -----------------------------------------
 
 library(ggplot2)
