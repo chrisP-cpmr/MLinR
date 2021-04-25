@@ -1,0 +1,11 @@
+---
+title: "MPM Group Project - AirBnb Price Prediction"
+author: "Giedo, Micha, Azher, Christoph"
+date: "4/25/2021"
+output: html_document
+---
+
+In this report, our group analyses the influence of different predictors on the 
+listing price of AirBnb offerings in different cites in the United States.
+
+

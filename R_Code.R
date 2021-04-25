@@ -7,10 +7,12 @@ library(ggplot2)
 library(plyr)
 library(multcomp)
 library(splines)
+library(faraway)
+library(dplyr)
 
 # ---------- Read / inspect data -----------------------------------------------
 
-df.airbnb <- read.csv("MPM_Data_final.csv")
+df.airbnb <- read.csv("MPM_Prop.csv")
 head(df.airbnb)
 str(df.airbnb)
 summary(df.airbnb)
@@ -24,15 +26,18 @@ df.airbnb$room_type <- as.factor(df.airbnb$room_type)
 df.airbnb$bed_type <- as.factor(df.airbnb$bed_type)
 df.airbnb$cancellation_policy <- as.factor(df.airbnb$cancellation_policy)
 df.airbnb$cleaning_fee <- as.factor(df.airbnb$cleaning_fee)
+df.airbnb$city <- as.numeric(df.airbnb$city)
 df.airbnb$city <- as.factor(df.airbnb$city)
 df.airbnb$host_has_profile_pic <- as.factor(df.airbnb$host_has_profile_pic)
 df.airbnb$host_identity_verified <- as.factor(df.airbnb$host_identity_verified)
-df.airbnb$host_since <- as.factor(df.airbnb$host_since)
 df.airbnb$instant_bookable <- as.factor(df.airbnb$instant_bookable)
 df.airbnb$amenities_Breakfast <- as.factor(df.airbnb$amenities_Breakfast)
 df.airbnb$amenities_Gym <- as.factor(df.airbnb$amenities_Gym)
 df.airbnb$amenities_Pets <- as.factor(df.airbnb$amenities_Pets)
 df.airbnb$amenities_WiFi <- as.factor(df.airbnb$amenities_WiFi)
+
+df.airbnb$accommodates <- as.numeric(df.airbnb$accommodates)
+df.airbnb$bathrooms <- as.numeric(df.airbnb$bathrooms)
 
 # ----------- Graphical Analysis -----------------------------------------------
 
@@ -95,6 +100,53 @@ ggplot(data = df.airbnb,
                      col = city)) + 
   geom_point() +
   geom_smooth()
+
+
+# ------------ Count data ------------------------------------------------------
+
+# Which predictor can be classified as count data in our data set?
+# accommodates
+# bathrooms
+# number of reviews -> not sure about this one
+# bedrooms
+# beds
+
+str(df.airbnb)
+
+glm.accommodates <- glm(log_price ~ accommodates, 
+                        family = "poisson")
+summary(glm.accommodates)
+
+glm.bathrooms <- glm(bathrooms ~ city,
+                family = "poisson")
+summary(glm.bathrooms)
+
+
+
+plot(log_price ~ bathrooms)
+abline(lm(log_price ~ bathrooms),
+       col = "yellow")
+
+
+
+lm.city <- lm(log_price ~ city)
+summary(lm.city)
+
+ggplot(mapping = aes(y = bathrooms,
+                     x = factor(city))) +
+  geom_violin() +
+  ylab("bathrooms") +
+  xlab("city")
+
+plot(log_price ~ city,
+     main = "log_price - city",
+     pch = 19,
+     col = "blue")
+abline(lm.city)
+
+str(df.airbnb$city)
+
+
 
 # ------------ Fitting first model ---------------------------------------------
 
