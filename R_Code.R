@@ -26,7 +26,7 @@ df.airbnb$room_type <- as.factor(df.airbnb$room_type)
 df.airbnb$bed_type <- as.factor(df.airbnb$bed_type)
 df.airbnb$cancellation_policy <- as.factor(df.airbnb$cancellation_policy)
 df.airbnb$cleaning_fee <- as.factor(df.airbnb$cleaning_fee)
-df.airbnb$city <- as.numeric(df.airbnb$city)
+df.airbnb$city <- as.factor(df.airbnb$city)
 df.airbnb$city <- as.factor(df.airbnb$city)
 df.airbnb$host_has_profile_pic <- as.factor(df.airbnb$host_has_profile_pic)
 df.airbnb$host_identity_verified <- as.factor(df.airbnb$host_identity_verified)
@@ -35,9 +35,6 @@ df.airbnb$amenities_Breakfast <- as.factor(df.airbnb$amenities_Breakfast)
 df.airbnb$amenities_Gym <- as.factor(df.airbnb$amenities_Gym)
 df.airbnb$amenities_Pets <- as.factor(df.airbnb$amenities_Pets)
 df.airbnb$amenities_WiFi <- as.factor(df.airbnb$amenities_WiFi)
-
-df.airbnb$accommodates <- as.numeric(df.airbnb$accommodates)
-df.airbnb$bathrooms <- as.numeric(df.airbnb$bathrooms)
 
 # ----------- Graphical Analysis -----------------------------------------------
 
