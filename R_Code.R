@@ -61,7 +61,7 @@ qplot(y = log_price, x = bedrooms,
       facets = ~ amenities_Breakfast)
 
 
-# ----------- Testing categorical variable 'property_type ----------------------
+# ----------- Testing categorical variable 'property_type' ----------------------
 
 count(df.airbnb, 'property_type')
 # some categories have only very few entries, maybe eliminate certain categories?
@@ -71,6 +71,8 @@ df.airbnb$property_type <- as.factor(df.airbnb$property_type)
 boxplot(log_price ~ property_type,
         main = 'Property type', 
         ylab = 'log_price')
+
+
 
 lm.aribnb.prop_type <- lm(log_price ~ property_type)
 coef(lm.aribnb.prop_type)
@@ -85,6 +87,7 @@ summary(lm.aribnb.prop_type)
 df.airbnb$city <- as.factor(df.airbnb$city)
 summary(df.airbnb['city'])
 str(df.airbnb['city'])
+count(df.airbnb$city)
 
 ggplot(data = df.airbnb,
        mapping = aes(y = log_price,
@@ -108,40 +111,7 @@ ggplot(data = df.airbnb,
 # bedrooms
 # beds
 
-str(df.airbnb)
 
-glm.accommodates <- glm(log_price ~ accommodates, 
-                        family = "poisson")
-summary(glm.accommodates)
-
-glm.bathrooms <- glm(bathrooms ~ city,
-                family = "poisson")
-summary(glm.bathrooms)
-
-
-
-plot(log_price ~ bathrooms)
-abline(lm(log_price ~ bathrooms),
-       col = "yellow")
-
-
-
-lm.city <- lm(log_price ~ city)
-summary(lm.city)
-
-ggplot(mapping = aes(y = bathrooms,
-                     x = factor(city))) +
-  geom_violin() +
-  ylab("bathrooms") +
-  xlab("city")
-
-plot(log_price ~ city,
-     main = "log_price - city",
-     pch = 19,
-     col = "blue")
-abline(lm.city)
-
-str(df.airbnb$city)
 
 
 

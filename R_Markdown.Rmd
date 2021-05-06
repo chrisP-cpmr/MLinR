@@ -8,6 +8,14 @@ output: html_document
 In this report, our group analyses the influence of different predictors on the 
 listing price of AirBnb offerings in different cites in the United States.
 
+The final model should provide a way to estimate the correct price for any new or existing 
+object listed on AirBnB in order to ensure high booking rates. Also, it ensures
+users of this model to not underprice their object and lose out on improved margins.
+Please keep in mind, this model does not take into consideration the exact location
+or 'cleanness' of an object due to a lack of data. However, both of these predictors
+would have a high influence. Meaning, you apartment most likely still 
+needs to be clean to result in a high booking rate
+
 First we will take a deeper look at our data, the response variable log_price 
 and all the available predictors.
 
@@ -57,3 +65,26 @@ predictors we have one continuous variable (number_of_reviews), 13 categorical
 variables most with two levels but also some with five or 6, one binomial
 variable (review_scores_rating) and four count variables.
 
+## Applying the Possion Distribution
+
+As our response variable is a continuous variable, we cannot apply the Poisson distribution
+to it. To show how this would work, we are going to consider another variable as our response variable.
+
+For this example, we choose the variable 'accommodates' where we want to find out if some predictors
+influence the size of the object to rent. Obviously, this is pretty clear for some predictors. If 
+the object accommodates more there are most likely to be more beds. Hence this should really only be
+regarded as an example of applying the Possion distribution.
+
+
+
+
+
+
+## Applying the Binomial Distribution
+
+
+
+
+
+
+## Running Cross Validation Checks on the models
