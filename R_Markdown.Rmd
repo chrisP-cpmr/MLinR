@@ -5,6 +5,8 @@ date: "4/25/2021"
 output: html_document
 ---
 
+# Description of the Project
+
 In this report, our group analyses the influence of different predictors on the 
 listing price of AirBnb offerings in different cites in the United States.
 
@@ -14,15 +16,28 @@ users of this model to not underprice their object and lose out on improved marg
 Please keep in mind, this model does not take into consideration the exact location
 or 'cleanness' of an object due to a lack of data. However, both of these predictors
 would have a high influence. Meaning, you apartment most likely still 
-needs to be clean to result in a high booking rate
+needs to be clean to result in a high booking rate.
 
-First we will take a deeper look at our data, the response variable log_price 
-and all the available predictors.
+# Data Preparation
 
-Lets look at all the predictors of our data set.
+As a first step, we load the data from our source .csv file and set all categorical
+values to be considered as factors. We also load the packages required to execute
+all our functions and calculations.
 
-```{r, echo=FALSE}
+```{r include=FALSE}
+
+library(ggplot2)
+library(plyr)
+library(multcomp)
+library(splines)
+library(faraway)
+library(dplyr)
+library(caret)
+library(tidyverse)
+library(neuralnet)
+
 df.airbnb <- read.csv("MPM_Prop.csv")
+
 df.airbnb$property_type <- as.factor(df.airbnb$property_type)
 df.airbnb$room_type <- as.factor(df.airbnb$room_type)
 df.airbnb$bed_type <- as.factor(df.airbnb$bed_type)
@@ -37,10 +52,26 @@ df.airbnb$amenities_Breakfast <- as.factor(df.airbnb$amenities_Breakfast)
 df.airbnb$amenities_Gym <- as.factor(df.airbnb$amenities_Gym)
 df.airbnb$amenities_Pets <- as.factor(df.airbnb$amenities_Pets)
 df.airbnb$amenities_WiFi <- as.factor(df.airbnb$amenities_WiFi)
+```
+
+# Data Understanding / Data Analysis
+
+Now we will take a deeper look at our data, the response variable log_price 
+and all the available predictors.
+
+Lets look at all the predictors of our data set.
+
+```{r include=FALSE}
+unneeded_col <- c("X", "Unnamed..0")
+df.airbnb <- df.airbnb[, ! names(df.airbnb) %in% unneeded_col, drop = F]
+```
+
+```{r}
 colnames(df.airbnb)
 ```
 
 We can see, our data set consists of a response variable and 19 predictors.
+The column name
 With a few simple commands, a better understanding of the values can be gained.
 
 ```{r}
@@ -57,13 +88,32 @@ The summary() command provides a first statistical overview of the data.
 
 ```{r}
 str(df.airbnb)
-`````
+```
 
 And str() indicates the type of the variables.
 Form this we can conclude, our target variable is a continuous variable, as 
 predictors we have one continuous variable (number_of_reviews), 13 categorical
 variables most with two levels but also some with five or 6, one binomial
 variable (review_scores_rating) and four count variables.
+
+# Defining the Measure of Fit and Cross Validation Approach
+
+In order to have a consistent evaluation of our models and cross validate all our
+models in the same way, the measure of fit as well as the cross validation approach
+will be explained in this section.
+
+For the measure of fit we choose the Root Mean Squared Error (RMSE) as it is easy
+to understand and also easily applied.
+
+For the cross validation, we will use a 10-fold approach. Meaning, we will split 
+our data into 10 groups of equal size and randomly assigned observations. When testing,
+every model will run at least once with every combination of test and train data
+combination.
+
+## Fitting a linear Model
+
+
+
 
 ## Applying the Possion Distribution
 
@@ -75,7 +125,9 @@ influence the size of the object to rent. Obviously, this is pretty clear for so
 the object accommodates more there are most likely to be more beds. Hence this should really only be
 regarded as an example of applying the Possion distribution.
 
+```{r}
 
+```
 
 
 
@@ -84,7 +136,25 @@ regarded as an example of applying the Possion distribution.
 
 
 
+## Applying a GAM
 
 
 
-## Running Cross Validation Checks on the models
+## Using the Support Vector Machines
+
+
+
+## Using a Neural Network
+
+
+
+
+## Using an Approximate Bayesian Computation
+
+
+
+## Comparing the best Models of each Class
+
+
+
+# Conclusion and Model Selection

@@ -355,33 +355,43 @@ pre code {
 </div>
 
 
+<div id="description-of-the-project" class="section level1">
+<h1>Description of the Project</h1>
 <p>In this report, our group analyses the influence of different predictors on the listing price of AirBnb offerings in different cites in the United States.</p>
-<p>First we will take a deeper look at our data, the response variable log_price and all the available predictors.</p>
+<p>The final model should provide a way to estimate the correct price for any new or existing object listed on AirBnB in order to ensure high booking rates. Also, it ensures users of this model to not underprice their object and lose out on improved margins. Please keep in mind, this model does not take into consideration the exact location or ‘cleanness’ of an object due to a lack of data. However, both of these predictors would have a high influence. Meaning, you apartment most likely still needs to be clean to result in a high booking rate.</p>
+</div>
+<div id="data-preparation" class="section level1">
+<h1>Data Preparation</h1>
+<p>As a first step, we load the data from our source .csv file and set all categorical values to be considered as factors. We also load the packages required to execute all our functions and calculations.</p>
+</div>
+<div id="data-understanding-data-analysis" class="section level1">
+<h1>Data Understanding / Data Analysis</h1>
+<p>Now we will take a deeper look at our data, the response variable log_price and all the available predictors.</p>
 <p>Lets look at all the predictors of our data set.</p>
-<pre><code>##  [1] &quot;X&quot;                      &quot;Unnamed..0&quot;             &quot;id&quot;                    
-##  [4] &quot;log_price&quot;              &quot;property_type&quot;          &quot;room_type&quot;             
-##  [7] &quot;accommodates&quot;           &quot;bathrooms&quot;              &quot;bed_type&quot;              
-## [10] &quot;cancellation_policy&quot;    &quot;cleaning_fee&quot;           &quot;city&quot;                  
-## [13] &quot;host_has_profile_pic&quot;   &quot;host_identity_verified&quot; &quot;instant_bookable&quot;      
-## [16] &quot;number_of_reviews&quot;      &quot;review_scores_rating&quot;   &quot;bedrooms&quot;              
-## [19] &quot;beds&quot;                   &quot;amenities_Gym&quot;          &quot;amenities_WiFi&quot;        
-## [22] &quot;amenities_Pets&quot;         &quot;amenities_Breakfast&quot;</code></pre>
-<p>We can see, our data set consists of a response variable and 19 predictors. With a few simple commands, a better understanding of the values can be gained.</p>
+<pre class="r"><code>colnames(df.airbnb)</code></pre>
+<pre><code>##  [1] &quot;id&quot;                     &quot;log_price&quot;              &quot;property_type&quot;         
+##  [4] &quot;room_type&quot;              &quot;accommodates&quot;           &quot;bathrooms&quot;             
+##  [7] &quot;bed_type&quot;               &quot;cancellation_policy&quot;    &quot;cleaning_fee&quot;          
+## [10] &quot;city&quot;                   &quot;host_has_profile_pic&quot;   &quot;host_identity_verified&quot;
+## [13] &quot;instant_bookable&quot;       &quot;number_of_reviews&quot;      &quot;review_scores_rating&quot;  
+## [16] &quot;bedrooms&quot;               &quot;beds&quot;                   &quot;amenities_Gym&quot;         
+## [19] &quot;amenities_WiFi&quot;         &quot;amenities_Pets&quot;         &quot;amenities_Breakfast&quot;</code></pre>
+<p>We can see, our data set consists of a response variable and 19 predictors. The column name With a few simple commands, a better understanding of the values can be gained.</p>
 <pre class="r"><code>head(df.airbnb)</code></pre>
-<pre><code>##   X Unnamed..0       id log_price property_type room_type accommodates
-## 1 0          0  6901257  5.010635             0         0            3
-## 2 1          1  6304928  5.129899             0         0            7
-## 3 2          2  7919400  4.976734             0         0            5
-## 4 3          3 13418779  6.620073            17         0            4
-## 5 4          4  3808709  4.744932             0         0            2
-## 6 5          5 12422935  4.442651             0         1            2
-##   bathrooms bed_type cancellation_policy cleaning_fee city host_has_profile_pic
-## 1         1        4                   2            1    4                    1
-## 2         1        4                   2            1    4                    1
-## 3         1        4                   1            1    4                    1
-## 4         1        4                   0            1    5                    1
-## 5         1        4                   1            1    2                    1
-## 6         1        4                   2            1    5                    1
+<pre><code>##         id log_price property_type room_type accommodates bathrooms bed_type
+## 1  6901257  5.010635             0         0            3         1        4
+## 2  6304928  5.129899             0         0            7         1        4
+## 3  7919400  4.976734             0         0            5         1        4
+## 4 13418779  6.620073            17         0            4         1        4
+## 5  3808709  4.744932             0         0            2         1        4
+## 6 12422935  4.442651             0         1            2         1        4
+##   cancellation_policy cleaning_fee city host_has_profile_pic
+## 1                   2            1    4                    1
+## 2                   2            1    4                    1
+## 3                   1            1    4                    1
+## 4                   0            1    5                    1
+## 5                   1            1    2                    1
+## 6                   2            1    5                    1
 ##   host_identity_verified instant_bookable number_of_reviews
 ## 1                      1                0                 2
 ## 2                      0                1                 6
@@ -405,59 +415,49 @@ pre code {
 ## 6              0                   0</code></pre>
 <p>Head provides an overview over the first 5 entries in the table, this provides us with some knowledge about how the rows look.</p>
 <pre class="r"><code>summary(df.airbnb)</code></pre>
-<pre><code>##        X           Unnamed..0          id             log_price    
-##  Min.   :    0   Min.   :    0   Min.   :     344   Min.   :2.303  
-##  1st Qu.:18391   1st Qu.:18528   1st Qu.: 6255815   1st Qu.:4.317  
-##  Median :36786   Median :37068   Median :12252055   Median :4.718  
-##  Mean   :36786   Mean   :37058   Mean   :11262636   Mean   :4.783  
-##  3rd Qu.:55179   3rd Qu.:55585   3rd Qu.:16396710   3rd Qu.:5.220  
-##  Max.   :73576   Max.   :74110   Max.   :21230903   Max.   :7.600  
-##                                                                    
-##  property_type   room_type  accommodates     bathrooms     bed_type 
-##  0      :48609   0:41017   Min.   : 1.00   Min.   :0.000   0:  468  
-##  17     :16424   1:30317   1st Qu.: 2.00   1st Qu.:1.000   1:  265  
-##  11     : 2649   2: 2136   Median : 2.00   Median :1.000   2:  742  
-##  28     : 1683             Mean   : 3.16   Mean   :1.194   3:  577  
-##  22     : 1236             3rd Qu.: 4.00   3rd Qu.:1.000   4:71418  
-##  23     :  600             Max.   :16.00   Max.   :8.000            
-##  (Other): 2269                                                      
-##  cancellation_policy cleaning_fee city      host_has_profile_pic
-##  0:22338             0:19474      0: 3457   0:  224             
-##  1:18916             1:53996      1: 3714   1:73246             
-##  2:32092                          2: 5660                       
-##  3:  107                          3:22268                       
-##  4:   17                          4:31975                       
-##                                   5: 6396                       
-##                                                                 
-##  host_identity_verified instant_bookable number_of_reviews review_scores_rating
-##  0:24006                0:54150          Min.   :  0.00    Min.   : 20.00      
-##  1:49464                1:19320          1st Qu.:  1.00    1st Qu.: 93.00      
-##                                          Median :  6.00    Median : 94.00      
-##                                          Mean   : 20.88    Mean   : 94.06      
-##                                          3rd Qu.: 23.00    3rd Qu.: 99.00      
-##                                          Max.   :605.00    Max.   :100.00      
+<pre><code>##        id             log_price     property_type   room_type  accommodates  
+##  Min.   :     344   Min.   :2.303   0      :48609   0:41017   Min.   : 1.00  
+##  1st Qu.: 6255815   1st Qu.:4.317   17     :16424   1:30317   1st Qu.: 2.00  
+##  Median :12252055   Median :4.718   11     : 2649   2: 2136   Median : 2.00  
+##  Mean   :11262636   Mean   :4.783   28     : 1683             Mean   : 3.16  
+##  3rd Qu.:16396710   3rd Qu.:5.220   22     : 1236             3rd Qu.: 4.00  
+##  Max.   :21230903   Max.   :7.600   23     :  600             Max.   :16.00  
+##                                     (Other): 2269                            
+##    bathrooms     bed_type  cancellation_policy cleaning_fee city     
+##  Min.   :0.000   0:  468   0:22338             0:19474      0: 3457  
+##  1st Qu.:1.000   1:  265   1:18916             1:53996      1: 3714  
+##  Median :1.000   2:  742   2:32092                          2: 5660  
+##  Mean   :1.194   3:  577   3:  107                          3:22268  
+##  3rd Qu.:1.000   4:71418   4:   17                          4:31975  
+##  Max.   :8.000                                              5: 6396  
+##                                                                      
+##  host_has_profile_pic host_identity_verified instant_bookable number_of_reviews
+##  0:  224              0:24006                0:54150          Min.   :  0.00   
+##  1:73246              1:49464                1:19320          1st Qu.:  1.00   
+##                                                               Median :  6.00   
+##                                                               Mean   : 20.88   
+##                                                               3rd Qu.: 23.00   
+##                                                               Max.   :605.00   
 ##                                                                                
-##     bedrooms           beds        amenities_Gym amenities_WiFi amenities_Pets
-##  Min.   : 0.000   Min.   : 0.000   0:66038       0: 2778        0:63352       
-##  1st Qu.: 1.000   1st Qu.: 1.000   1: 7432       1:70692        1:10118       
-##  Median : 1.000   Median : 1.000                                              
-##  Mean   : 1.267   Mean   : 1.713                                              
-##  3rd Qu.: 1.000   3rd Qu.: 2.000                                              
-##  Max.   :10.000   Max.   :18.000                                              
-##                                                                               
-##  amenities_Breakfast
-##  0:65222            
-##  1: 8248            
-##                     
-##                     
-##                     
-##                     
+##  review_scores_rating    bedrooms           beds        amenities_Gym
+##  Min.   : 20.00       Min.   : 0.000   Min.   : 0.000   0:66038      
+##  1st Qu.: 93.00       1st Qu.: 1.000   1st Qu.: 1.000   1: 7432      
+##  Median : 94.00       Median : 1.000   Median : 1.000                
+##  Mean   : 94.06       Mean   : 1.267   Mean   : 1.713                
+##  3rd Qu.: 99.00       3rd Qu.: 1.000   3rd Qu.: 2.000                
+##  Max.   :100.00       Max.   :10.000   Max.   :18.000                
+##                                                                      
+##  amenities_WiFi amenities_Pets amenities_Breakfast
+##  0: 2778        0:63352        0:65222            
+##  1:70692        1:10118        1: 8248            
+##                                                   
+##                                                   
+##                                                   
+##                                                   
 ## </code></pre>
 <p>The summary() command provides a first statistical overview of the data.</p>
 <pre class="r"><code>str(df.airbnb)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    73470 obs. of  23 variables:
-##  $ X                     : int  0 1 2 3 4 5 6 7 8 9 ...
-##  $ Unnamed..0            : int  0 1 2 3 4 5 6 7 8 9 ...
+<pre><code>## &#39;data.frame&#39;:    73470 obs. of  21 variables:
 ##  $ id                    : int  6901257 6304928 7919400 13418779 3808709 12422935 11825529 13971273 180792 5385260 ...
 ##  $ log_price             : num  5.01 5.13 4.98 6.62 4.74 ...
 ##  $ property_type         : Factor w/ 19 levels &quot;0&quot;,&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,..: 1 1 1 13 1 1 1 8 13 13 ...
@@ -490,6 +490,7 @@ pre code {
 </div>
 <div id="running-cross-validation-checks-on-the-models" class="section level2">
 <h2>Running Cross Validation Checks on the models</h2>
+</div>
 </div>
 
 
