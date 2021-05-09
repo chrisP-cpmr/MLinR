@@ -117,18 +117,88 @@ combination.
 
 ## Applying the Possion Distribution
 
-As our response variable is a continuous variable, we cannot apply the Poisson distribution
-to it. To show how this would work, we are going to consider another variable as our response variable.
+As our response variable is a continuous variable, we cannot apply the Poisson distribution to it. To show how this would work, we are going to consider another variable as a response variable.
 
-For this example, we choose the variable 'accommodates' where we want to find out if some predictors
-influence the size of the object to rent. Obviously, this is pretty clear for some predictors. If 
-the object accommodates more there are most likely to be more beds. Hence this should really only be
-regarded as an example of applying the Possion distribution.
+For this example, we choose the variable 'accommodates' where we want to determine
+if some predictors influence the size of the object to rent. Obviously, this is pretty clear for some predictors. If the object accommodates more there are most likely to be more beds. Hence this should really only be regarded as an example of applying the Possion distribution.
+
+Lets first create a simple model and see the result.
 
 ```{r}
+glm.accommodates.3 <- glm(accommodates ~ city, 
+                          family = "poisson",
+                          data = df.airbnb)
 
+summary(glm.accommodates.3)
 ```
 
+----- add explenation
+
+Lets simulate the data and put it into a boxplot.
+
+```{r}
+set.seed(522)
+sim.data.accommodates.Poisson <- simulate(glm.accommodates.3)
+
+ggplot(mapping = aes(y = sim.data.accommodates.Poisson$sim_1,
+                     x = df.airbnb$city)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0) +
+  ylab("accomodates") +
+  xlab("city")
+```
+
+---- add explenation 
+
+Lets now create a complex model.
+
+```{r}
+glm.accommodates.4 <- glm(accommodates ~ city + property_type + log_price + 
+                            property_type * city,
+                          family = "poisson",
+                          data = df.airbnb)
+```
+
+To check which model fits better, we will run a 10-fold cross validation check.
+
+```{r}
+set.seed(544)
+r.squared.simple <- c()
+r.squared.complex <- c()
+# shuffle data
+df.airbnb <- df.airbnb[sample(nrow(df.airbnb)),]
+folds <- cut(seq(1,nrow(df.airbnb)), breaks = 10, labels = FALSE)
+for(i in 1:10){
+  testIndexes <- which(folds==i, arr.ind = TRUE)
+  df.airbnb.test <- df.airbnb[testIndexes, ]
+  df.airbnb.train <- df.airbnb[-testIndexes, ]
+  ## insert your models - simple
+  # fit the model with test data
+  model.1.train <- glm(formula = formula(glm.accommodates.3),
+                       data = df.airbnb.train)
+  # predict the model
+  predicted.model.1.test <- predict(model.1.train,
+                                    newdata = df.airbnb.test)
+  # compute R^2
+  r.squared.simple[i] <- cor(predicted.model.1.test, 
+                             df.airbnb.test$accommodates)^2
+  ## insert you model - complex
+  # fit the model with test data
+  model.2.train <- glm(formula = formula(glm.accommodates.4),
+                       data = df.airbnb.train)
+  # predict the model
+  predicted.model.2.test <- predict(model.2.train,
+                                    newdata = df.airbnb.test)
+  # compute R^2
+  r.squared.complex <- cor(predicted.model.2.test, 
+                           df.airbnb.test$accommodates)^2
+}
+
+mean(r.squared.simple)
+mean(r.squared.complex)
+```
+
+From the results we can see, the simpler model fits much better and should therefore be considered. Again, this only an example to show the application of a Poisson model.
 
 
 
@@ -138,7 +208,9 @@ regarded as an example of applying the Possion distribution.
 
 ## Applying a GAM
 
+```{r}
 
+```
 
 ## Using the Support Vector Machines
 

@@ -3,6 +3,7 @@
 
 # ---------- Import / Install packages -----------------------------------------
 
+install.packages("tcltk")
 library(ggplot2)
 library(plyr)
 library(multcomp)
@@ -15,6 +16,7 @@ library(neuralnet)
 library(nnet)
 library(gamlss.add)
 library(ggplot2)
+library(confidence)
 
 # ---------- Read / inspect data -----------------------------------------------
 
@@ -42,8 +44,10 @@ df.airbnb$amenities_Gym <- as.factor(df.airbnb$amenities_Gym)
 df.airbnb$amenities_Pets <- as.factor(df.airbnb$amenities_Pets)
 df.airbnb$amenities_WiFi <- as.factor(df.airbnb$amenities_WiFi)
 
-# ----------- Graphical Analysis -----------------------------------------------
+df.airbnb$price <- backtransform(df.airbnb$log_price, type="log")
 
+
+# ----------- Graphical Analysis -----------------------------------------------
 
 plot(log_price ~ bedrooms, 
      main = "Relationship of numb. of bedrooms on price",
@@ -108,7 +112,7 @@ ggplot(data = df.airbnb,
   geom_smooth()
 
 
-# ------------ Count data ------------------------------------------------------
+# ------------ Poisson Model----------------------------------------------------
 
 # Which predictor can be classified as count data in our data set?
 # accommodates
@@ -119,6 +123,104 @@ ggplot(data = df.airbnb,
 
 ## glm Possion
 
+colnames(df.airbnb)
+
+lm.accommodates.1 <- lm(accommodates ~ city, data = df.airbnb)
+coef(lm.accommodates.1)
+
+set.seed(511)
+sim.data.accommodates <- simulate(lm.accommodates.1)
+
+ggplot(mapping = aes(y = sim.data.accommodates$sim_1,
+                     x = df.airbnb$city)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0) +
+  ylab("accomodates") +
+  xlab("city")
+
+# We can see, the lm model createds values below 0 which should not be possible
+
+
+# simple model
+glm.accommodates.3 <- glm(accommodates ~ city, 
+                          family = "poisson",
+                          data = df.airbnb)
+
+coef(glm.accommodates.3)
+summary(glm.accommodates.3)
+
+set.seed(522)
+sim.data.accommodates.Poisson <- simulate(glm.accommodates.3)
+
+ggplot(mapping = aes(y = sim.data.accommodates.Poisson$sim_1,
+                     x = df.airbnb$city)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0) +
+  ylab("accomodates") +
+  xlab("city")
+
+# compared to the lm model, the poisson distribution does not fit values below 0
+
+# complex model
+glm.accommodates.4 <- glm(accommodates ~ city + property_type + log_price + 
+                            property_type * city,
+                          family = "poisson",
+                          data = df.airbnb)
+
+coef(glm.accommodates.4)
+summary(glm.accommodates.4)
+
+set.seed(533)
+sim.data.accommodates.Poisson.1 <- simulate(glm.accommodates.4)
+
+ggplot(mapping = aes(y = sim.data.accommodates.Poisson.1$sim_1,
+                     x = df.airbnb$city)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0) +
+  ylab("accomodates") +
+  xlab("city")
+
+# cross validation
+# 10-fold cross validation
+set.seed(544)
+r.squared.simple <- c()
+r.squared.complex <- c()
+# shuffle data
+df.airbnb <- df.airbnb[sample(nrow(df.airbnb)),]
+folds <- cut(seq(1,nrow(df.airbnb)), breaks = 10, labels = FALSE)
+for(i in 1:10){
+  testIndexes <- which(folds==i, arr.ind = TRUE)
+  df.airbnb.test <- df.airbnb[testIndexes, ]
+  df.airbnb.train <- df.airbnb[-testIndexes, ]
+  ## insert your models - simple
+  # fit the model with test data
+  model.1.train <- glm(formula = formula(glm.accommodates.3),
+                       data = df.airbnb.train)
+  # predict the model
+  predicted.model.1.test <- predict(model.1.train,
+                                    newdata = df.airbnb.test)
+  # compute R^2
+  r.squared.simple[i] <- cor(predicted.model.1.test, 
+                             df.airbnb.test$accommodates)^2
+  ## insert you model - complex
+  # fit the model with test data
+  model.2.train <- glm(formula = formula(glm.accommodates.4),
+                       data = df.airbnb.train)
+  # predict the model
+  predicted.model.2.test <- predict(model.2.train,
+                                    newdata = df.airbnb.test)
+  # compute R^2
+  r.squared.complex <- cor(predicted.model.2.test, 
+                           df.airbnb.test$accommodates)^2
+}
+
+mean(r.squared.simple)
+mean(r.squared.complex)
+
+# the simple model is better at predicting the number of how many people a object
+# can accommodate.
+
+# ---------------------------
 # simple model
 glm.accommodates.1 <- glm(accommodates ~ log_price + property_type + amenities_Gym +
                           amenities_Breakfast + bed_type + city, 
@@ -215,6 +317,7 @@ mean(r.squared.complex)
 boxplot(r.squared.simple, r.squared.complex)
 
 
+
 # ------------ Fitting first model ---------------------------------------------
 
 
@@ -286,8 +389,8 @@ df.airbnb <- df.airbnb[sample(nrow(df.airbnb)),]
 folds <- cut(seq(1,nrow(df.airbnb)), breaks = 10, labels = FALSE)
 for(i in 1:10){
   testIndexes <- which(folds==i, arr.ind = TRUE)
-  testData <- df.airbnb[testIndexes, ]
-  trainData <- df.airbnb[-testIndexes, ]
+  df.airbnb.test <- df.airbnb[testIndexes, ]
+  ddf.airbnb.train <- df.airbnb[-testIndexes, ]
   ## insert your models - simple
   # fit the model with test data
   model.1.train <- glm(formula = formula(glm.accommodates.1),
