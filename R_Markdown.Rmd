@@ -277,7 +277,7 @@ glm.df.airbnb.60 <- glm(isExpensive ~ property_type + room_type +
                           accommodates + bathrooms + bed_type + cancellation_policy +
                           cleaning_fee + city + host_has_profile_pic +
                           host_identity_verified + instant_bookable + 
-                          number_of_reviews + review_scores_rating + bedrooms + 
+                          s(number_of_reviews) + s(review_scores_rating) + bedrooms + 
                           beds + amenities_Breakfast + amenities_Gym + amenities_WiFi +
                           amenities_Pets,
                         family = "quasibinomial",
@@ -309,12 +309,14 @@ glm.df.airbnb.62 <- glm(isExpensive ~ room_type +
 We will use a confusion matrix to compare the two models.
 
 ```{r}
+set.seed(567)
 fitted.glm.1 <- ifelse(fitted(glm.df.airbnb.61) < 0.5,
                        yes = 0, no = 1)
 d.obs.fit.airbnb.1 <- data.frame(obs = df.airbnb$isExpensive,
                                  fitted = fitted.glm.1)
 table.1 <- table(obs=d.obs.fit.airbnb.1$obs,
                  fit=d.obs.fit.airbnb.1$fitted)
+table.1
 ```
 ```{r}
 sensitivity(table.1)
@@ -327,12 +329,14 @@ The complex model already has a pretty good sensitivity and specificity.
 Lets see how the simple model is performing. 
 
 ```{r}
+set.seed(568)
 fitted.glm.2 <- ifelse(fitted(glm.df.airbnb.62) < 0.5,
                        yes = 0, no = 1)
 d.obs.fit.airbnb.2 <- data.frame(obs = df.airbnb$isExpensive,
                                  fitted = fitted.glm.2)
 table.2 <- table(obs=d.obs.fit.airbnb.2$obs,
                  fit=d.obs.fit.airbnb.2$fitted)
+table.2
 ```
 ```{r}
 sensitivity(table.2)
@@ -342,6 +346,34 @@ specificity(table.2)
 ```
 
 Although the sensitivity is better in the simple model, the specificity is much higher for the complex model. As a result, we would choose the complex model as our final model. 
+
+Fitting a GAM to has only minimal effects and is therefore not taken over the complex model.
+
+```{r}
+gam.df.airbnb.63 <- gam(isExpensive ~ property_type + room_type +
+                          accommodates + bathrooms + bed_type + cancellation_policy +
+                          cleaning_fee + city + host_has_profile_pic +
+                          host_identity_verified + instant_bookable + 
+                          s(number_of_reviews) + s(review_scores_rating) + bedrooms + 
+                          beds + amenities_Gym,
+                        family = "quasibinomial",
+                        data = df.airbnb)
+
+set.seed(568)
+fitted.gam.3 <- ifelse(fitted(gam.df.airbnb.63) < 0.5,
+                       yes = 0, no = 1)
+d.obs.fit.airbnb.3 <- data.frame(obs = df.airbnb$isExpensive,
+                                 fitted = fitted.gam.3)
+table.3 <- table(obs=d.obs.fit.airbnb.3$obs,
+                 fit=d.obs.fit.airbnb.3$fitted)
+table.3
+```
+```{r}
+sensitivity(table.3)
+```
+```{r}
+specificity(table.3)
+```
 
 ## Applying a GAM
 
