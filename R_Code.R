@@ -390,7 +390,7 @@ folds <- cut(seq(1,nrow(df.airbnb)), breaks = 10, labels = FALSE)
 for(i in 1:10){
   testIndexes <- which(folds==i, arr.ind = TRUE)
   df.airbnb.test <- df.airbnb[testIndexes, ]
-  ddf.airbnb.train <- df.airbnb[-testIndexes, ]
+  df.airbnb.train <- df.airbnb[-testIndexes, ]
   ## insert your models - simple
   # fit the model with test data
   model.1.train <- glm(formula = formula(glm.accommodates.1),

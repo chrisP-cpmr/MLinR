@@ -2,7 +2,9 @@
 title: "MPM Group Project - AirBnb Price Prediction"
 author: "Giedo, Micha, Azher, Christoph"
 date: "4/25/2021"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 # Description of the Project
@@ -35,6 +37,10 @@ library(dplyr)
 library(caret)
 library(tidyverse)
 library(neuralnet)
+library(nnet)
+library(gamlss.add)
+library(ggplot2)
+library(mgcv)
 
 df.airbnb <- read.csv("MPM_Prop.csv")
 
@@ -119,44 +125,88 @@ combination.
 
 As our response variable is a continuous variable, we cannot apply the Poisson distribution to it. To show how this would work, we are going to consider another variable as a response variable.
 
-For this example, we choose the variable 'accommodates' where we want to determine
-if some predictors influence the size of the object to rent. Obviously, this is pretty clear for some predictors. If the object accommodates more there are most likely to be more beds. Hence this should really only be regarded as an example of applying the Possion distribution.
+For this example, we choose the variable 'number_of_reviews' where we want to determine
+if some predictors influence number of reviews an object receives.
 
-Lets first create a simple model and see the result.
+Let first do some graphical analysis on the response variable an some predictors.
 
-```{r}
-glm.accommodates.3 <- glm(accommodates ~ city, 
-                          family = "poisson",
-                          data = df.airbnb)
+```{r echo=TRUE}
+boxplot(number_of_reviews ~ city,
+        ylab = "Number of reviews",
+        xlab = "City",
+        data = df.airbnb)
 
-summary(glm.accommodates.3)
+boxplot(number_of_reviews ~ room_type,
+        ylab = "Number of reviews",
+        xlab = "Room type",
+        data = df.airbnb)
+
+boxplot(number_of_reviews ~ property_type,
+        ylab = "Number of reviews",
+        xlab = "Property type",
+        data = df.airbnb)
+
+plot(number_of_reviews ~ review_scores_rating,
+        ylab = "Number of reviews",
+        xlab = "Review scores",
+        data = df.airbnb)
+
+plot(number_of_reviews ~ log_price,
+        ylab = "Number of reviews",
+        xlab = "log Price",
+        data = df.airbnb)
 ```
 
------ add explenation
+We can see that there is no clear evidence that the predictor "City", "Room Type" or "Property Type" have an influence on the response variable. However, we could suggest a influence of the "Review scores" and the "log Price"
 
-Lets simulate the data and put it into a boxplot.
+Lets first create a simple model and a complex model. An see if the predictors indicate evidence for an influence.
 
 ```{r}
-set.seed(522)
-sim.data.accommodates.Poisson <- simulate(glm.accommodates.3)
+glm.df.airbnb.50 <- glm(number_of_reviews ~ city + room_type + 
+                          review_scores_rating + log_price + property_type,
+                        family = "poisson",
+                        data = df.airbnb)
+summary(glm.df.airbnb.50)
+```
+We see that almost all predictors and factor levels seem to have some sort of influence.
 
-ggplot(mapping = aes(y = sim.data.accommodates.Poisson$sim_1,
-                     x = df.airbnb$city)) +
-  geom_boxplot() +
-  geom_hline(yintercept = 0) +
-  ylab("accomodates") +
-  xlab("city")
+Lets create a more complex model and see the results.
+
+```{r}
+glm.df.airbnb.51 <-glm(number_of_reviews ~ log_price + property_type + room_type +
+                         accommodates + bathrooms + bed_type + cancellation_policy +
+                         cleaning_fee + city + host_has_profile_pic +
+                         host_identity_verified + instant_bookable +
+                         review_scores_rating + bedrooms + beds + amenities_Breakfast +
+                         amenities_Gym + amenities_Pets + amenities_WiFi,
+                        family = "quasipoisson",
+                        data = df.airbnb)
+summary(glm.df.airbnb.51)
 ```
 
----- add explenation 
-
-Lets now create a complex model.
+Again, most of the predictors have an influence, let's ensure this even further.
 
 ```{r}
-glm.accommodates.4 <- glm(accommodates ~ city + property_type + log_price + 
-                            property_type * city,
-                          family = "poisson",
-                          data = df.airbnb)
+drop1(glm.df.airbnb.51, test = "F")
+```
+
+Apart from the preditcor "amenities_Pets" all predictors seem to have an influence, hence our final model will use all predictors except the one mentioned before.
+
+```{r}
+glm.df.airbnb.52 <- update(glm.df.airbnb.51, . ~ . - amenities_Pets)
+```
+
+Additionally, we will create a GAM model to account for non-linerar relationships of the two continuous predictors "log_price" and "review_scores_rating".
+
+```{r}
+gam.df.airbnb.53 <- gam(number_of_reviews ~ s(log_price) + property_type + room_type +
+                          accommodates + bathrooms + bed_type + cancellation_policy +
+                          cleaning_fee + city + host_has_profile_pic +
+                          host_identity_verified + instant_bookable +
+                          s(review_scores_rating) + bedrooms + beds + 
+                          amenities_Breakfast + amenities_Gym + amenities_WiFi,
+                        family = "quasipoisson",
+                        data = df.airbnb)
 ```
 
 To check which model fits better, we will run a 10-fold cross validation check.
@@ -174,37 +224,124 @@ for(i in 1:10){
   df.airbnb.train <- df.airbnb[-testIndexes, ]
   ## insert your models - simple
   # fit the model with test data
-  model.1.train <- glm(formula = formula(glm.accommodates.3),
+  model.1.train <- glm(formula = formula(glm.df.airbnb.52),
                        data = df.airbnb.train)
   # predict the model
   predicted.model.1.test <- predict(model.1.train,
                                     newdata = df.airbnb.test)
   # compute R^2
   r.squared.simple[i] <- cor(predicted.model.1.test, 
-                             df.airbnb.test$accommodates)^2
+                             df.airbnb.test$number_of_reviews)^2
   ## insert you model - complex
   # fit the model with test data
-  model.2.train <- glm(formula = formula(glm.accommodates.4),
+  model.2.train <- gam(formula = formula(gam.df.airbnb.53),
                        data = df.airbnb.train)
   # predict the model
   predicted.model.2.test <- predict(model.2.train,
                                     newdata = df.airbnb.test)
   # compute R^2
-  r.squared.complex <- cor(predicted.model.2.test, 
-                           df.airbnb.test$accommodates)^2
+  r.squared.complex[i] <- cor(predicted.model.2.test, 
+                           df.airbnb.test$number_of_reviews)^2
 }
-
-mean(r.squared.simple)
-mean(r.squared.complex)
 ```
 
-From the results we can see, the simpler model fits much better and should therefore be considered. Again, this only an example to show the application of a Poisson model.
+```{r}
+print(mean(r.squared.simple)*100)
+```
+```{r}
+print(mean(r.squared.complex)*100)
+```
 
-
+From the results we can see, the GAM model fits  better and should therefore be considered. However, the result is not great and more predictors should be evaluated to come up with a better model.
 
 ## Applying the Binomial Distribution
 
+As our data has a continuous variable as a predictors (log_price), we will split the data into two groups, the "expensive" and "cheap" objects. For simplicity reasons, we will split the data on the median price which is 4.718499.
 
+```{r}
+df.airbnb$isExpensive <- 0
+for(i in 1:73470 ) {
+  if (df.airbnb$log_price[as.numeric(i)] > 4.718499) {
+    df.airbnb$isExpensive[i] <- 1
+  } else {
+    df.airbnb$isExpensive[i] <- 0
+  }
+}
+df.airbnb$isExpensive <- as.factor(df.airbnb$isExpensive)
+```
+
+Lets create an initial model with all the predictors except the log_price as this would make the model to efficient and would not produce the desired analysis.
+
+```{r}
+glm.df.airbnb.60 <- glm(isExpensive ~ property_type + room_type +
+                          accommodates + bathrooms + bed_type + cancellation_policy +
+                          cleaning_fee + city + host_has_profile_pic +
+                          host_identity_verified + instant_bookable + 
+                          number_of_reviews + review_scores_rating + bedrooms + 
+                          beds + amenities_Breakfast + amenities_Gym + amenities_WiFi +
+                          amenities_Pets,
+                        family = "quasibinomial",
+                        data = df.airbnb)
+```
+
+Lets see if all predictors are actually important for our model
+
+```{r}
+drop1(glm.df.airbnb.60, test = "F")
+```
+As we can see, most of the predictors are important and can be disregarded in the model. We will therefore create a complex model without the unneeded predictors.
+
+```{r}
+glm.df.airbnb.61 <- update(glm.df.airbnb.60, . ~ . - amenities_Breakfast -
+                            amenities_WiFi - amenities_Pets)
+```
+
+We also will create a simple mode to compare the efficiency of the two models.
+
+```{r}
+glm.df.airbnb.62 <- glm(isExpensive ~ room_type +
+                          accommodates + amenities_Breakfast +
+                          amenities_Gym + amenities_WiFi,
+                        family = "binomial",
+                        data = df.airbnb)
+```
+
+We will use a confusion matrix to compare the two models.
+
+```{r}
+fitted.glm.1 <- ifelse(fitted(glm.df.airbnb.61) < 0.5,
+                       yes = 0, no = 1)
+d.obs.fit.airbnb.1 <- data.frame(obs = df.airbnb$isExpensive,
+                                 fitted = fitted.glm.1)
+table.1 <- table(obs=d.obs.fit.airbnb.1$obs,
+                 fit=d.obs.fit.airbnb.1$fitted)
+```
+```{r}
+sensitivity(table.1)
+```
+```{r}
+specificity(table.1)
+```
+
+The complex model already has a pretty good sensitivity and specificity. 
+Lets see how the simple model is performing. 
+
+```{r}
+fitted.glm.2 <- ifelse(fitted(glm.df.airbnb.62) < 0.5,
+                       yes = 0, no = 1)
+d.obs.fit.airbnb.2 <- data.frame(obs = df.airbnb$isExpensive,
+                                 fitted = fitted.glm.2)
+table.2 <- table(obs=d.obs.fit.airbnb.2$obs,
+                 fit=d.obs.fit.airbnb.2$fitted)
+```
+```{r}
+sensitivity(table.2)
+```
+```{r}
+specificity(table.2)
+```
+
+Although the sensitivity is better in the simple model, the specificity is much higher for the complex model. As a result, we would choose the complex model as our final model. 
 
 ## Applying a GAM
 
