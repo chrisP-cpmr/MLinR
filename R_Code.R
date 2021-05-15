@@ -150,7 +150,7 @@ str(df.airbnb$city)
 
 lm.airbnb.1 <- lm(log_price ~ property_type + room_type + accommodates + bathrooms +
                     bed_type + cancellation_policy + cleaning_fee + city +
-                    host_has_profile_pic + host_identity_verified + host_since +
+                    host_has_profile_pic + host_identity_verified + # host_since +
                     instant_bookable + number_of_reviews + review_scores_rating +
                     bedrooms + beds + amenities_Breakfast + amenities_Gym +
                     amenities_Pets + amenities_WiFi)
@@ -159,16 +159,137 @@ summary(lm.airbnb.1)
 
 lm.airbnb.2 <- lm(log_price ~ property_type + room_type + accommodates + bathrooms +
                     bed_type + cancellation_policy + cleaning_fee + city +
-                    host_has_profile_pic + host_identity_verified + host_since +
+                    host_has_profile_pic + host_identity_verified + #host_since +
                     instant_bookable + number_of_reviews + review_scores_rating +
                     bedrooms + beds + amenities_Breakfast + amenities_Gym +
                     amenities_Pets + amenities_WiFi + (property_type + room_type + 
                     accommodates + bathrooms + bed_type + cancellation_policy + 
-                    cleaning_fee + host_has_profile_pic + host_identity_verified +
-                    host_since + instant_bookable + number_of_reviews + 
+                    cleaning_fee + host_has_profile_pic + host_identity_verified 
+                    #+host_since
+                    + instant_bookable + number_of_reviews + 
                     review_scores_rating + bedrooms + beds + amenities_Breakfast + 
                     amenities_Gym + amenities_Pets + amenities_WiFi) * city)
 
 summary(lm.airbnb.2)
 
 anova(lm.airbnb.1, lm.airbnb.2)
+
+#--------------------Smoother to Characterise the relationship between Log_Price and Predictors------
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+                        mapping = aes(y = log_price,
+                                      x = property_type)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = room_type)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = accommodates)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = bathrooms)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = bed_type)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = cancellation_policy)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = cleaning_fee)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = host_has_profile_pic)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = host_identity_verified)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = instant_bookable)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = number_of_reviews)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = review_scores_rating)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = bedrooms)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = beds)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = amenities_Breakfast)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = amenities_Gym)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = amenities_Pets)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+library(ggplot2) 
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = amenities_WiFi)) +
+  geom_point() + geom_smooth() + facet_wrap(. ~ city)
+
+
+# No smoothing : amenities_WiFi, amenities_Pets, amenities_Gym, amenities_Breakfast, instand_bookable, host_identitiy_verified, host_has_profile_pic, cleaning_fee, cancellation_policy, bed_type, bathrooms, room_type, property_type 
+
+# Yes smoothing : beds, bedrooms, review_scores_rating, number_of_reviews, accomodates
+
+#----------workinprogress--------------------------------------
+  
