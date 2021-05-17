@@ -292,4 +292,65 @@ ggplot(data = df.airbnb,
 # Yes smoothing : beds, bedrooms, review_scores_rating, number_of_reviews, accomodates
 
 #----------workinprogress--------------------------------------
-  
+
+lm.airbnb.3 <- lm(log_price ~ accommodates * city, data = df.airbnb)
+qqnorm(resid(lm.airbnb.3)) 
+qqline(resid(lm.airbnb.3))
+summary(lm.airbnb.3)
+
+#------------I can not install below package though some codes are running, so that is in progress---------------------
+install.packages("plgraphics",
+                 repos = "http://R-forge.R-project.org")
+library(plgraphics)
+plregr(lm.airbnb.3,
+plotselect = c(default = 0, 
+               qq = 1), 
+xvar = FALSE)
+
+#
+ggplot(mapping = aes (y=resid(lm.airbnb.3),
+                      x= fitted(lm.airbnb.3)))+
+  geom_abline(intercept = 0, slope = 0)+
+  geom_point()+
+  geom_smooth()
+
+#--------------Homoscedasticity----------------------------------
+
+ggplot(mapping = aes(y = abs(resid(lm.airbnb.3)), x = fitted(lm.airbnb.3))) +
+  geom_abline(intercept = 0, slope = 0) + geom_point() +
+  geom_smooth()
+
+plregr(lm.airbnb.3,
+       plotselect = c(default = 0,
+       absresfit = 2),
+       xvar = FALSE)
+
+
+
+
+#----------Influential observations-------------------
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = accommodates)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + facet_wrap(. ~ city)
+
+
+## 1) compute Cook’s distance 
+cooks.dist.lm.airbnb.3 <- cooks.distance(lm.airbnb.3)
+## 2) plot it
+ggplot(data = lm.airbnb.3,
+       mapping = aes(y = log_price, x = accommodates,
+                     colour = cooks.dist.lm.airbnb.3)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + facet_wrap(. ~ city)
+
+
+plot(lm.airbnb.3)
+
+
+resid.lm.airbnb.3 <- resid(lm.airbnb.3)
+ggplot(data = df.airbnb,
+       mapping = aes(y = resid.lm.airbnb.3,
+                     x = city))+
+                     geom_boxplot()
