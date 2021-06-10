@@ -131,10 +131,170 @@ our data into 10 groups of equal size and randomly assigned observations. When t
 every model will run at least once with every combination of test and train data
 combination.
 
-## Fitting a linear Model
+
+# Fitting a linear Model
 
 
 
+#Lab3: Testing categorical variable 'bedrooms'
+
+Plotting a regression line to see if there is a positive correlation between
+log_price and bedrooms. It seems to be a straight-forward positive correlation
+
+
+```{r}
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = bedrooms)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+Using a smoother to detect non-linearity
+The correlation is more or less linear for apartments with 1-7 bedrooms,
+afterwards there's a price level plateau
+```{r}
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = bedrooms)) +
+  geom_point() +
+  geom_smooth()
+```
+
+#Lab3: Testing quantitative variable 'reviews_scores_rating'
+
+Plotting a regression line to see if there is a positive correlation between
+log_price and review scores. Again, it seems to be a straight-forward positive 
+correlation
+
+```{r}
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = review_scores_rating)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+When using a smoother, things are looking not so linear anymore
+
+```{r}
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = review_scores_rating)) +
+  geom_point() +
+  geom_smooth()
+```
+
+#Lab3: Testing categorical variable 'property_type'
+
+To visualize categorical values such as the property types, boxplots are
+better suited than scatterplots. The graph shows huge differences between 
+the types
+
+```{r}
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = room_type)) +
+  geom_boxplot()
+```
+
+#Lab3: Interaction testing on review scores and city
+
+There is no indication that the effect of accommodates strongly differs among
+cities
+
+```{r}
+ggplot(data = df.airbnb,
+        mapping = aes(y = log_price,
+                     x = accommodates,
+                     colour = city))
+  geom_point() +
+  geom_smooth()
+```  
+
+There are visible differences between the six cities in terms of price 
+price development per accomodate
+
+```{r}
+ggplot(data = df.airbnb,
+       mapping = aes(y = log_price,
+                     x = accommodates)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_wrap(. ~ city)
+```
+
+#Lab3: Fitting the model
+There are very strong relations between room type and accommodates as well as
+room types and city. There is a weak relation between room type and
+reviews
+
+```{r}
+lm.airbnb.0 <- lm(log_price ~ review_scores_rating + accommodates +
+                  property_type + bathrooms + number_of_reviews +
+                  review_scores_rating:accommodates +
+                  review_scores_rating:property_type +
+                  review_scores_rating:bathrooms +
+                  review_scores_rating:number_of_reviews,
+                  data = df.airbnb)
+
+drop1(lm.airbnb.0, test = "F")
+```
+
+As the relation between room type and reviews is weak, it gets dropped. We now
+have a model that we can use further
+
+```{r}
+lm.airbnb.1 <- update(lm.airbnb.0, . ~ . - review_scores_rating:accommodates)
+drop1(lm.airbnb.1, test = "F")
+```
+
+#Lab4: Testing non-linear variable 'accommodates'
+1st model with a linear effect for accommodates
+
+```{r}
+lm.airbnb.1 <- lm(log_price ~ property_type + review_scores_rating + bathrooms +
+                    accommodates,
+                 data = df.airbnb)
+```
+
+2nd model with a quadratic effect for accommodates
+
+```{r}
+lm.airbnb.2 <- update(lm.airbnb.1, . ~ . + I(accommodates^2))
+```
+
+There is strong evidence that accommodates needs a quadratic function
+
+```{r}
+anova(lm.airbnb.1, lm.airbnb.2)
+```
+
+
+#Lab4: Fitting a GAM to non-linear variable 'accommodates'
+
+```{r}
+gam.airbnb.1 <- gam(log_price ~ city +
+                     s(accommodates) + s(bedrooms),
+                   data = df.airbnb)
+summary(gam.airbnb.1)
+
+
+plot(gam.airbnb.1, residuals = TRUE, select = 1)
+```
+
+#Lab4: Fitting a GAM to non-linear variable 'accommodates'
+
+```{r}
+gam.airbnb.2 <- gam(log_price ~ city +
+                      s(accommodates) + bedrooms,
+                    data = df.airbnb)
+summary(gam.airbnb.2)
+
+
+plot(gam.airbnb.2, residuals = TRUE, select = 1)
+
+```
 
 ## Applying the Possion Distribution
 
