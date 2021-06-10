@@ -494,7 +494,7 @@ trCtrl <- trainControl(
 )
 
 models <- train(
-  x = df.subset_airbnbNN_scaled, 
+  x = df.subset_airbnbNN_scaled %>% select(-log_price), 
   # scaled data with everything other than log_price
   y = df.subset_airbnbNN_scaled %>% pull(log_price), 
   method = 'neuralnet', metric = 'RMSE', 
