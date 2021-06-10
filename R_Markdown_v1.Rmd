@@ -409,8 +409,131 @@ round(specificity(table.3),4)
 
 ## Using a Neural Network
 
+Additionally, to all the models that we have seen so far, we can also use a artificial neural network (ANN) to predict the price of an Airbnb object. ANN's can be very powerfull tools, when it comes to evaluating many predictors at once. However, the applied methods and calculations are highly complex. As a result, ANN's are often also referred to as a 'blackbox' in machine learning. It is very difficult to understand, how the model achieved its results which can be off-putting to many clients, which would like to understand how the results were calculated. 
+
+What we learned in this project, the computing powers of ANN's are high and it takes time to run a model. Unfortunately, we do not have the computing power to run a model with our complete dataset. As a result, we are only going to use a subset of our initial dataset. For ANN's the One-Hot-Encoding (OHE) mehtod is also used, which turns each category of a categorical predictor into its own binary dimension.
+The two steps, creating a subset and OHE are shown below.
+
+```{r}
+indices_subset <- createDataPartition(df.airbnb$log_price, p=0.01, list = FALSE)
+df.subset_airbnbNN <- df.airbnb %>% slice(indices_subset)
+dmy <- dummyVars(" ~ .", data = df.subset_airbnbNN)
+df.subset_airbnbNN <- data.frame(predict(dmy, newdata = df.subset_airbnbNN))
+```
+
+### Fit a first ANN to the subset
+
+We use createDataPartition to create train and test data. The function is used to ensure that the data variance is similar, this would not be the case if we would just split the data with a set percentage. In this case we use 80% as train data.
+The third box in the boxplot is a split done individually which will show that there is a high chance of a bias and the data will be skewed.
+
+```{r}
+set.seed(101)
+indices <- createDataPartition(df.subset_airbnbNN$log_price, p = 0.8, list = FALSE)
+train <- df.subset_airbnbNN %>% slice(indices) # take the data labeled before as train data
+test <- df.subset_airbnbNN %>% slice(-indices) # take the data not labeled before as test data
+boxplot(train$log_price, test$log_price, df.subset_airbnbNN %>% sample_frac(0.2) %>% pull(log_price))
+```
+
+For this model we will scale the data individually.
+
+```{r}
+max <- apply(df.subset_airbnbNN, 2, max)
+min <- apply(df.subset_airbnbNN, 2, min)
+df.subset_airbnbNN_scaled <- as.data.frame(scale(df.subset_airbnbNN, center = min, scale = max - min))
+train_scaled <- df.subset_airbnbNN_scaled %>% slice(indices)
+test_scaled <- df.subset_airbnbNN_scaled %>% slice(-indices)
+```
+
+Now we will train our first model with the 'neuralnet' function, this requires us to provide all the predictors we want to use. In this case, we will initially provide all the predictors we have and have a model with one node in the first layer and two nodes in the second layer.
+In the end, the model will be ploted.
+
+```{r}
+set.seed(100)
+airbnbNN_net = neuralnet(log_price ~ ., train_scaled, hidden = c(1,2) , linear.output = TRUE)
+plot(airbnbNN_net)
+```
+
+### Predict with the ANN
+
+Let us predict the price with the trained model. For this we also need to scale back the results.
+
+```{r}
+pred_scaled <- compute(airbnbNN_net, test_scaled)
+pred <- pred_scaled$net.result * (max(df.airbnb$log_price) - min(df.airbnb$log_price)) + min(df.airbnb$log_price)
+```
+
+And then we can plot the results.
+
+```{r}
+plot(test$log_price, pred, col='blue', pch=16, ylab = "predicted log_price NN", xlab = "real log_price")
+abline(0,1)
+```
+
+And then calculate the RMSE.
+
+```{r}
+RMSE(pred, test$log)
+```
+
+The normal error is around 0.65 of the log_price, meaning, the predicted log_price will be in the range of 0.65 points of the real rating.
+
+### Cross Validation for ANN
+
+In principle we cannot be sure that we were not simply "lucky" with the train/test split above, so the proper way to run this would be via `caret` using k-fold Cross Validation.
+We we run the cross validation with 3 layers, each with different amount of nodes. Our measure of fit is also the 'RMSE' as for all other models.
 
 
+```{r message=FALSE, warning=FALSE}
+set.seed(100)
+tuGrid <- expand.grid(.layer1=c(1:4), .layer2=c(0:4), .layer3=c(0:1)) # define grid 
+trCtrl <- trainControl(
+  method = 'repeatedcv', # take split of 80%
+  number = 5, 
+  repeats = 10, # do the whole cal 10 times
+  returnResamp = 'final'
+)
+
+models <- train(
+  x = df.subset_airbnbNN_scaled, 
+  # scaled data with everything other than log_price
+  y = df.subset_airbnbNN_scaled %>% pull(log_price), 
+  method = 'neuralnet', metric = 'RMSE', 
+  # specify the models and the metric to calculate the accuracy on
+  linear.output = TRUE, 
+  # linear function for continuous variable
+  tuneGrid = tuGrid,
+  trControl = trCtrl
+)
+```
+
+Now we show all the models to visually analyze which combination of nodes and layers are most accurate.
+
+```{r}
+plot(models)
+```
+
+Best model is to select 2 Nodes in the hidden layer 1 and 0 for the layer 2.
+
+The best model according to the cross-validation would look like this.
+
+```{r}
+plot(models$finalModel)
+```
+
+Now we predict the log_price again with the best model from the cross-validation, plot the results and analyse the RMSE to see if the model was actually better than the initial model.
+
+```{r}
+pred_scaled <- compute(models$finalModel, test_scaled)
+pred <- pred_scaled$net.result * (max(df.airbnb$log_price) - min(df.airbnb$log_price)) + min(df.airbnb$log_price)
+plot(test$log_price, pred, col='blue', pch=16, ylab = "predicted log_price NN", xlab = "real log_price")
+abline(0,1)
+```
+
+```{r}
+RMSE(pred, test$log_price)
+```
+
+XXXXXX
 
 ## Using an Approximate Bayesian Computation
 
