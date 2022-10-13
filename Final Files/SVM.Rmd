@@ -1,0 +1,202 @@
+---
+title: "SVM"
+author: "Giedo, Micha, Azher, Christoph"
+date: "6/11/2021"
+output: html_document
+---
+
+```{r include=FALSE}
+
+library(e1071)
+library(ggplot2)
+library(plyr)
+library(multcomp)
+library(splines)
+library(faraway)
+library(dplyr)
+library(caret)
+library(tidyverse)
+library(neuralnet)
+library(nnet)
+library(gamlss.add)
+library(ggplot2)
+library(mgcv)
+library(caret)
+library(tidyverse)
+library(abc)
+
+df.airbnb <- read.csv("MPM_Last_.csv")
+df.airbnb.num <- read.csv("MPM_Prop.csv")
+
+df.airbnb$property_type <- as.factor(df.airbnb$property_type)
+df.airbnb$room_type <- as.factor(df.airbnb$room_type)
+df.airbnb$bed_type <- as.factor(df.airbnb$bed_type)
+df.airbnb$cancellation_policy <- as.factor(df.airbnb$cancellation_policy)
+df.airbnb$cleaning_fee <- as.factor(df.airbnb$cleaning_fee)
+df.airbnb$city <- as.factor(df.airbnb$city)
+df.airbnb$city <- as.factor(df.airbnb$city)
+df.airbnb$host_has_profile_pic <- as.factor(df.airbnb$host_has_profile_pic)
+df.airbnb$host_identity_verified <- as.factor(df.airbnb$host_identity_verified)
+df.airbnb$instant_bookable <- as.factor(df.airbnb$instant_bookable)
+df.airbnb$amenities_Breakfast <- as.factor(df.airbnb$amenities_Breakfast)
+df.airbnb$amenities_Gym <- as.factor(df.airbnb$amenities_Gym)
+df.airbnb$amenities_Pets <- as.factor(df.airbnb$amenities_Pets)
+df.airbnb$amenities_WiFi <- as.factor(df.airbnb$amenities_WiFi)
+
+df.airbnb.num$property_type <- as.factor(df.airbnb.num$property_type)
+df.airbnb.num$room_type <- as.factor(df.airbnb.num$room_type)
+df.airbnb.num$bed_type <- as.factor(df.airbnb.num$bed_type)
+df.airbnb.num$cancellation_policy <- as.factor(df.airbnb.num$cancellation_policy)
+df.airbnb.num$cleaning_fee <- as.factor(df.airbnb.num$cleaning_fee)
+df.airbnb.num$city <- as.factor(df.airbnb.num$city)
+df.airbnb.num$city <- as.factor(df.airbnb.num$city)
+df.airbnb.num$host_has_profile_pic <- as.factor(df.airbnb.num$host_has_profile_pic)
+df.airbnb.num$host_identity_verified <- as.factor(df.airbnb.num$host_identity_verified)
+df.airbnb.num$instant_bookable <- as.factor(df.airbnb.num$instant_bookable)
+df.airbnb.num$amenities_Breakfast <- as.factor(df.airbnb.num$amenities_Breakfast)
+df.airbnb.num$amenities_Gym <- as.factor(df.airbnb.num$amenities_Gym)
+df.airbnb.num$amenities_Pets <- as.factor(df.airbnb.num$amenities_Pets)
+df.airbnb.num$amenities_WiFi <- as.factor(df.airbnb.num$amenities_WiFi)
+
+df.airbnb$price <- 3^df.airbnb$log_price
+df.airbnb.num$price <- 3^df.airbnb.num$log_price
+
+# The last calculation in the r snippet above applies the backtransformation of the log_price
+# variable (log base 3) to provide a better picture of the actual prices for a user.
+```
+
+# Applying Support Vector Machines
+
+```{r, include = FALSE}
+df.airbnb.withoutcat <- read.csv("MPM_Prop.csv")
+
+df.airbnb.withoutcat$property_type <- as.factor(df.airbnb.withoutcat$property_type)
+df.airbnb.withoutcat$room_type <- as.factor(df.airbnb.withoutcat$room_type)
+df.airbnb.withoutcat$bed_type <- as.factor(df.airbnb.withoutcat$bed_type)
+df.airbnb.withoutcat$cancellation_policy <- as.factor(df.airbnb.withoutcat$cancellation_policy)
+df.airbnb.withoutcat$cleaning_fee <- as.factor(df.airbnb.withoutcat$cleaning_fee)
+df.airbnb.withoutcat$city <- as.factor(df.airbnb.withoutcat$city)
+df.airbnb.withoutcat$city <- as.factor(df.airbnb.withoutcat$city)
+df.airbnb.withoutcat$host_has_profile_pic <- as.factor(df.airbnb.withoutcat$host_has_profile_pic)
+df.airbnb.withoutcat$host_identity_verified <- as.factor(df.airbnb.withoutcat$host_identity_verified)
+df.airbnb.withoutcat$instant_bookable <- as.factor(df.airbnb.withoutcat$instant_bookable)
+df.airbnb.withoutcat$amenities_Breakfast <- as.factor(df.airbnb.withoutcat$amenities_Breakfast)
+df.airbnb.withoutcat$amenities_Gym <- as.factor(df.airbnb.withoutcat$amenities_Gym)
+df.airbnb.withoutcat$amenities_Pets <- as.factor(df.airbnb.withoutcat$amenities_Pets)
+df.airbnb.withoutcat$amenities_WiFi <- as.factor(df.airbnb.withoutcat$amenities_WiFi)
+```
+
+Although SVM can not be applied to the response variable log_price of this group work, we still try to use this technique in two of the following cases.
+
+Case 1: We classify "review_scores_rating" into two classes that are above or below median rating.
+```{r}
+summary(df.airbnb.withoutcat$review_scores_rating)
+df.airbnb.withoutcat$isAboveorBelowRating <- 0
+for(i in 1:73470 ) {
+  if (df.airbnb.withoutcat$review_scores_rating[as.integer(i)] > 94) {
+    df.airbnb.withoutcat$isAboveorBelowRating[i] <- 1
+  } else {
+    df.airbnb.withoutcat$isAboveorBelowRating[i] <- 0
+  }
+}
+df.airbnb.withoutcat$isAboveorBelowRating <- as.factor(df.airbnb.withoutcat$isAboveorBelowRating)
+```
+
+Case 2: In this case, we classify log_price into two classes that are above or below median price.
+```{r}
+summary(df.airbnb.withoutcat$log_price)
+df.airbnb.withoutcat$isAboveorBelowPrice <- 0
+for(i in 1:73470 ) {
+  if (df.airbnb.withoutcat$log_price[as.numeric(i)] > 4.7) {
+    df.airbnb.withoutcat$isAboveorBelowPrice[i] <- 1
+  } else {
+    df.airbnb.withoutcat$isAboveorBelowPrice[i] <- 0
+  }
+}
+df.airbnb.withoutcat$isAboveorBelowPrice <- as.factor(df.airbnb.withoutcat$isAboveorBelowPrice)
+
+```
+
+Let us plot classified review_scores_rating data.
+```{r}
+df.airbnb.withoutcat %>%
+  ggplot(aes(x = number_of_reviews, y = log_price, color = isAboveorBelowRating)) + geom_point() + facet_wrap(. ~ city)
+```
+
+Similarly, let us plot classified log_price data.
+```{r}
+df.airbnb.withoutcat %>%
+  ggplot(aes(x = number_of_reviews, y = review_scores_rating, color = isAboveorBelowPrice)) + 
+  geom_point() + facet_wrap(. ~ city)
+
+```
+
+Let us prepare data for training.
+```{r}
+str(df.airbnb.withoutcat)
+set.seed(222)
+indices_Rating <- createDataPartition(df.airbnb.withoutcat$isAboveorBelowRating, p=.8, list = F)
+
+train_Rating <- df.airbnb.withoutcat %>% slice(indices_Rating)
+test_in_Rating <- df.airbnb.withoutcat %>% slice(-indices_Rating) %>% select(-isAboveorBelowRating)
+test_truth_Rating <- df.airbnb.withoutcat %>% slice(-indices_Rating) %>% pull(isAboveorBelowRating)
+
+set.seed(222)
+indices_Price <- createDataPartition(df.airbnb.withoutcat$isAboveorBelowPrice, p=.8, list = F)
+
+train_Price <- df.airbnb.withoutcat %>% slice(indices_Price)
+test_in_Price <- df.airbnb.withoutcat %>% slice(-indices_Price) %>% select(-isAboveorBelowPrice)
+test_truth_Price <- df.airbnb.withoutcat %>% slice(-indices_Price) %>% pull(isAboveorBelowPrice)
+```
+
+Let us apply a complex paramatier "radial" kernel to both cases.
+```{r}
+set.seed(222)
+df.airbnb.withoutcat_svm_Rating1 <- svm(isAboveorBelowRating ~ ., train_Rating, kernel = "radial", scale = TRUE, cost = 100)
+summary(df.airbnb.withoutcat_svm_Rating1)
+plot(df.airbnb.withoutcat_svm_Rating1, train_Rating, review_scores_rating ~ number_of_reviews)
+
+df.airbnb.withoutcat_svm_Price1 <- svm(isAboveorBelowPrice ~ ., train_Price, kernel = "radial", scale = TRUE, cost = 100)
+summary(df.airbnb.withoutcat_svm_Price1)
+plot(df.airbnb.withoutcat_svm_Price1, train_Price, log_price ~ number_of_reviews)
+```
+
+Let us make prediction.
+```{r}
+pred_Rating1 <- predict(df.airbnb.withoutcat_svm_Rating1, test_in_Rating)
+table(pred_Rating1)
+conf_matrix_Rating1 <- confusionMatrix(test_truth_Rating, pred_Rating1)
+conf_matrix_Rating1
+
+pred_Price1 <- predict(df.airbnb.withoutcat_svm_Price1, test_in_Price)
+table(pred_Price1)
+conf_matrix_Price1 <- confusionMatrix(test_truth_Price, pred_Price1)
+conf_matrix_Price1
+```
+We can see that the prediction accuracy of case 1 is 99.88% and case 2 is 99.43% respectively.
+
+Now let us apply "linear" kernel.
+```{r}
+df.airbnb.withoutcat_svm_Rating2 <- svm(isAboveorBelowRating ~ ., train_Rating, kernel = "linear", scale = TRUE, cost = 10)
+summary(df.airbnb.withoutcat_svm_Rating2)
+plot(df.airbnb.withoutcat_svm_Rating2, train_Rating, review_scores_rating ~ number_of_reviews)
+
+df.airbnb.withoutcat_svm_Price2 <- svm(isAboveorBelowPrice ~ ., train_Price, kernel = "linear", scale = TRUE, cost = 10)
+summary(df.airbnb.withoutcat_svm_Price2)
+plot(df.airbnb.withoutcat_svm_Price2, train_Price, log_price ~ number_of_reviews)
+```
+
+Let us make a prediction through "linear" kernel.
+```{r}
+pred_Rating2 <- predict(df.airbnb.withoutcat_svm_Rating2, test_in_Rating)
+table(pred_Rating2)
+conf_matrix_Rating2 <- confusionMatrix(test_truth_Rating, pred_Rating2)
+conf_matrix_Rating2
+
+pred_Price2 <- predict(df.airbnb.withoutcat_svm_Price2, test_in_Price)
+table(pred_Price2)
+conf_matrix_Price2 <- confusionMatrix(test_truth_Price, pred_Price2)
+conf_matrix_Price2
+```
+We see that the accuracy through "linear" kernel is very similar to the "radial" kernel in both cases (slight higher for Case 1 and lower for Case 2).
+
